@@ -18,6 +18,8 @@ opt-level = 'z'
 lto = true
 
 [dependencies]
+aof = {path=".."}
+chrono = { version = "0.4.23", features = ["serde"] }
 yew = "0.19.3"
 yew-router = "0.16.0"
 

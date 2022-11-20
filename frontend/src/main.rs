@@ -1,5 +1,8 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
+use chrono::Utc;
+
+use aof;
 
 #[derive(Clone, Routable, PartialEq)]
 enum Route {
@@ -7,10 +10,12 @@ enum Route {
     Home,
     #[at("/about")]
     About,
+    #[at("/author/:id")]
+    Author { id: i32 },
     #[at("/services")]
     Services,
     #[at("/blog/:id")]
-    Blog { id: String },
+    Blog { id: i32 },
     #[at("/schedule")]
     Schedule,
     #[at("/contact")]
@@ -23,6 +28,51 @@ enum Route {
 enum Msg {
     ToggleNavBar,
     PageUpdated
+}
+
+struct Blog {
+    entry: Option<aof::BlogEntry>
+}
+
+impl Component for Blog {
+    type Message = ();
+    type Properties = ();
+
+    fn create(ctx: &Context<Self>) -> Self {
+        Self {
+            entry: None,
+        }
+    }
+
+    fn changed(&mut self, ctx: &Context<Self>) -> bool {
+        self.entry = Some(aof::BlogEntry{id: 1, title: "Title".to_string(), image_url: {"/static/aof1.jpg".to_string()}, author: {aof::Author{id: 1, name: "Adela Margin".to_string()}}, when: {Utc::now()}, description: "description".to_string(), contents: "contents".to_string()});
+        true
+    }
+
+    fn view(&self, _ctx: &Context<Self>) -> Html {
+        let Self { entry } = self;
+//         let e = entry.clone().unwrap();
+        match entry {
+            None => html! { <div class="fetching">{"Fetching"}</div> },
+            Some(e) => html! {
+                <div class="card">
+                    <div class="card-image">
+                        <figure class="image is-2by1">
+                            <img alt="This post's image" src={e.image_url.clone()} loading="lazy" />
+                        </figure>
+                    </div>
+                    <div class="card-content">
+                        <Link<Route> classes={classes!("title", "is-block")} to={Route::Blog { id: e.id }}>
+                            { &e.title }
+                        </Link<Route>>
+                        <Link<Route> classes={classes!("subtitle", "is-block")} to={Route::Author { id: e.author.id }}>
+                            { &e.author.name }
+                        </Link<Route>>
+                    </div>
+                </div>
+            }
+        }
+    }
 }
 
 #[function_component(About)]
@@ -94,7 +144,7 @@ fn home() -> Html {
             <h1>{"Arta de a simți"}</h1>
             <p>{"Te ajutăm să deprinzi arta de a trăi armonios alături de ceilalți; atât în viața personală, cât și în cea profesională și anume arta de a simți cu adevărat viața!"}</p>
             </div>
-            <aside><img /><button {onclick}>{"Programează o ședință"}</button></aside>
+            <aside><img src="/static/aof1.jpg"/><button {onclick}>{"Programează o ședință"}</button></aside>
             </div>
             <h2>{"Cine suntem"}</h2>
             <p>{"ArtofFeeling e o comunitate de psihoeducatori"}</p>
@@ -164,7 +214,7 @@ impl Component for App {
                 <input type="checkbox" id="showmenu"/><label for="showmenu">{"≡"}</label>
                 <Link<Route> to={Route::About}>{ "Despre noi" }</Link<Route>>
                 <Link<Route> to={Route::Services}>{ "Servicii" }</Link<Route>>
-                <Link<Route> to={Route::Blog { id: "1".to_string() }}>{ "Blog" }</Link<Route>>
+                <Link<Route> to={Route::Blog { id: 1 }}>{ "Blog" }</Link<Route>>
                 <Link<Route> to={Route::Schedule}>{ "Programări" }</Link<Route>>
                 <Link<Route> to={Route::Contact}>{ "Contact" }</Link<Route>>
                 </nav>
@@ -183,6 +233,7 @@ fn switch(routes: &Route) -> Html {
     match routes {
         Route::Home => html! { <Home /> },
         Route::About => html! { <About /> },
+        Route::Author { id } => html! {<main><p>{format!("You are looking at Author {}", id)}</p></main>},
         Route::Services => html! { <About /> },
         Route::Blog { id } => html! {<main><p>{format!("You are looking at Blog {}", id)}</p></main>},
         Route::Schedule => html! { <About /> },
