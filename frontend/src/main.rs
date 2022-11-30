@@ -1,6 +1,7 @@
+use gloo_net::http::Request;
 use yew::prelude::*;
 use yew_router::prelude::*;
-use chrono::Utc;
+use chrono::Datelike;
 
 use aof;
 
@@ -25,51 +26,96 @@ enum Route {
     NotFound,
 }
 
+enum FetchState {
+    Fetching,
+    Success(aof::BlogEntry),
+    Failed(gloo_net::Error)
+}
+
 enum Msg {
-    ToggleNavBar,
-    PageUpdated
+    SetBlogFetchState (FetchState)
 }
 
 struct Blog {
-    entry: Option<aof::BlogEntry>
+    entry: FetchState,
+}
+
+async fn fetch_blog(id: i32) -> Result<aof::BlogEntry, gloo_net::Error> {
+    let url = format!("/api/blog/{}", id);
+    let resp = Request::get(url.as_str()).header("Content-Type", "application/json").send().await.unwrap();
+    resp.json::<aof::BlogEntry>().await
+}
+
+#[derive(Clone, PartialEq, Properties)]
+struct BlogProps {
+    id: i32,
 }
 
 impl Component for Blog {
-    type Message = ();
-    type Properties = ();
+    type Message = Msg;
+    type Properties = BlogProps;
 
     fn create(ctx: &Context<Self>) -> Self {
-        Self {
-            entry: None,
-        }
+        let id = ctx.props().id.clone();
+        ctx.link().send_future(async move {
+            match fetch_blog(id).await {
+                Ok(blog) => Msg::SetBlogFetchState(FetchState::Success(blog)),
+                Err(err) => Msg::SetBlogFetchState(FetchState::Failed(err))
+            }
+        });
+        Self { entry: FetchState::Fetching }
     }
 
-    fn changed(&mut self, ctx: &Context<Self>) -> bool {
-        self.entry = Some(aof::BlogEntry{id: 1, title: "Title".to_string(), image_url: {"/static/aof1.jpg".to_string()}, author: {aof::Author{id: 1, name: "Adela Margin".to_string()}}, when: {Utc::now()}, description: "description".to_string(), contents: "contents".to_string()});
-        true
+//     fn changed(&mut self, _ctx: &Context<Self>) -> bool {
+//         self.entry = Some(aof::BlogEntry {
+//             id: 1,
+//             title: "Title".to_string(),
+//             image_url: { "/static/aof1.jpg".to_string() },
+//             author: {
+//                 aof::Author {
+//                     id: 1,
+//                     name: "Adela Margin".to_string(),
+//                 }
+//             },
+//             when: { Utc::now() },
+//             description: "description".to_string(),
+//             contents: vec![],
+//         });
+//         true
+//     }
+
+    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
+        match msg {
+            Msg::SetBlogFetchState(fetch_state) => {
+                self.entry = fetch_state;
+                true
+            }
+        }
     }
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
         let Self { entry } = self;
-//         let e = entry.clone().unwrap();
         match entry {
-            None => html! { <div class="fetching">{"Fetching"}</div> },
-            Some(e) => html! {
-                <div class="card">
-                    <div class="card-image">
-                        <figure class="image is-2by1">
-                            <img alt="This post's image" src={e.image_url.clone()} loading="lazy" />
-                        </figure>
+            FetchState::Fetching => {
+                html! { <main><div class="fetching">{format!("Fetching blog id {}", _ctx.props().id)}</div></main> }
+            }
+            FetchState::Success(e) => html! {
+                <main>
+                    <div class="presentation">
+                        <div>
+                            <h1>{&e.title}</h1>
+                            <p class="info">{"publicat de "}<Link<Route> classes={classes!("subtitle", "is-block")} to={Route::Author { id: e.author.id }}>{ &e.author.name }</Link<Route>>{format!(" în {}/{}/{}", &e.created_on.day0(), &e.created_on.month0(), &e.created_on.year())}</p>
+                            <p>{&e.description}</p>
+                        </div>
+                        <aside><img alt="This post's image" src={e.image_url.clone()} loading="lazy" /></aside>
                     </div>
-                    <div class="card-content">
-                        <Link<Route> classes={classes!("title", "is-block")} to={Route::Blog { id: e.id }}>
-                            { &e.title }
-                        </Link<Route>>
-                        <Link<Route> classes={classes!("subtitle", "is-block")} to={Route::Author { id: e.author.id }}>
-                            { &e.author.name }
-                        </Link<Route>>
-                    </div>
-                </div>
+                </main>
+            },
+            FetchState::Failed(e) => html! {
+                <main>
+                    <h2 class="error">{"Fetch Failed!"}</h2>
+                    <p>{format!("Error: {}", e)}</p>
+                </main>
             }
         }
     }
@@ -106,8 +152,18 @@ fn about() -> Html {
             <p>{"Daca vrei doar sa ne cunoastem, sa vezi cum rezonam, poti sa te inscrii la o sedinta gratuita, mai jos."}</p>
             <p>{"Fac cu mult drag si grupuri de Cercul sigurantei pentru cei care-si doresc sa invete despre parenting intr-un mod realist si intr-un program bazat pe studii ce stau la baza dezvoltarii umane. Mediul e unul cald, de acceptare si siguranta in care invatam sa modelam relatiile cu copiii nostri si cu cei din jur. Si inainte de toate, Invatam CONECTAREA sau A FI ALATURI, astfel incat relatiile cu cei din jur sa devina implinitoare. Plus, odata ce ai platit pentru Cerc, poti participa ori de cate ori mai doresti sa-ti improspatezi informatia din curs, din nou, cu alta grupa."}</p>
             <p>{"Pentru inscrieri in grupele urmatoare, te poti inscrie aici sau printr-un mesaj pe whatsapp:"}</p>
-                <a href={"https://tinyurl.com/yc4ce8jj"}>{"https://tinyurl.com/yc4ce8jj"}</a>
+            <p><a href={"https://tinyurl.com/yc4ce8jj"}>{"https://tinyurl.com/yc4ce8jj"}</a></p>
             <p>{"Cu grija de tine!"}</p>
+        </main>
+    }
+}
+
+#[function_component(Schedule)]
+fn schedule() -> Html {
+    html! {
+        <main>
+            <div class="calendly-inline-widget" data-url="https://calendly.com/adel-druhora/60min" style="min-width:320px;height:630px;"></div>
+            <script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async=true></script>
         </main>
     }
 }
@@ -177,8 +233,7 @@ fn home() -> Html {
 }
 
 struct App {
-    navbar_visible: bool,
-//     _listener: HistoryListener,
+    //     _listener: HistoryListener,
 }
 
 impl Component for App {
@@ -187,24 +242,17 @@ impl Component for App {
 
     fn create(_ctx: &Context<Self>) -> Self {
         Self {
-            navbar_visible: false,
-//             _listener: listener,
+            //             _listener: listener,
         }
     }
 
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            Msg::ToggleNavBar => {
-                self.navbar_visible = !self.navbar_visible;
-                true
-            }
-            Msg::PageUpdated => {
-                true
-            }
+            Msg::SetBlogFetchState(_) => todo!(),
         }
     }
 
-    fn view(&self, _ctx: &Context<Self>) -> Html {    
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
             <div>
                 <BrowserRouter>
@@ -233,10 +281,12 @@ fn switch(routes: &Route) -> Html {
     match routes {
         Route::Home => html! { <Home /> },
         Route::About => html! { <About /> },
-        Route::Author { id } => html! {<main><p>{format!("You are looking at Author {}", id)}</p></main>},
+        Route::Author { id } => {
+            html! {<main><p>{format!("You are looking at Author {}", id)}</p></main>}
+        }
         Route::Services => html! { <About /> },
-        Route::Blog { id } => html! {<main><p>{format!("You are looking at Blog {}", id)}</p></main>},
-        Route::Schedule => html! { <About /> },
+        Route::Blog { id } => html! { <Blog id={*id}/> },
+        Route::Schedule => html! { <Schedule /> },
         Route::Contact => html! { <Contact /> },
         Route::NotFound => html! { <h1>{ "404" }</h1> },
     }

@@ -1,0 +1,2 @@
+select "b"."id", "b"."title", "b"."image_url", ("a"."id", "a"."name") as "author!: Author", "b"."created_on",
+"b"."description" from "blog_entry" as "b" join "author" as "a" on "b"."author" = "a"."id" where "b"."id" = $1

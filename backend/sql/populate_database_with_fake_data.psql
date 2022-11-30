@@ -1,0 +1,6 @@
+with a as (
+    insert into "author"("name")
+        values ('Adela Margin')
+    returning "id"
+) insert into "blog_entry"("title", "image_url", "author", "description")
+    values ('Titlu articol', '/static/aof1.jpg', (select "id" from "a"), 'Descriere foarte lunga pentru articol');

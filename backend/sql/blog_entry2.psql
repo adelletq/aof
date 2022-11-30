@@ -1,0 +1,13 @@
+select
+    jsonb_build_object(
+        'id', "b"."id",
+        'title', "b"."title",
+        'image_url', "b"."image_url",
+        'author', jsonb_build_object(
+            'id', "a"."id",
+            'name', "a"."name"),
+        'description', "b"."description",
+        'created_on', "b"."created_on")
+    from "blog_entry" as "b"
+        join "author" as "a" on "b"."author" = "a"."id"
+    where "b"."id" = $1

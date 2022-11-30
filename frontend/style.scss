@@ -21,6 +21,7 @@ body>div {
 main {
 	flex: 1;
 	overflow: auto;
+	padding: 1.5rem 0;
 }
 
 footer {
@@ -46,8 +47,10 @@ header nav {
 	position: relative;
 }
 
-nav a {
+nav a, nav label {
 	margin: 5px 1rem 5px 0;
+	padding: 0.5rem 2rem;
+	border-radius: 1.5rem 0 1.5rem 0;
 }
 
 nav a:first-child {
@@ -88,10 +91,13 @@ a, nav label {
 	text-decoration: none;
 	font-weight: bold;
 	border: 1px #ccc solid;
-	padding: 0.5rem 2rem;
-	border-radius: 1.5rem 0 1.5rem 0;
 	box-shadow: 0 0.3rem 0.3rem 0.1rem #ccc;
 	text-shadow: 0 0.1rem 0.1rem #000;
+}
+
+main a {
+	padding: 0.1rem 0.5rem;
+	border-radius: 0.6rem;
 }
 
 h1, h2, h3, h4 {
@@ -140,13 +146,18 @@ main form input[type=submit] {
 	flex: 1;
 }
 
+.presentation>div p.info {
+	text-align: right;
+	align-self: flex-end;
+}
+
 .presentation aside {
 	flex: 0;
 }
 
 .presentation aside img {
+	aspect-ratio: 3/4;
 	width: 240px;
-	height: 320px;
 }
 
 .presentation aside button {
@@ -157,5 +168,17 @@ main form input[type=submit] {
 	border: 0 none;
 	font-size: 1.2rem;
 	padding: 0.5rem;
+}
+
+@media only screen and (max-width: 660px) {
+.presentation {
+	flex-direction: column;
+}
+.presentation aside {
+	order: -1;
+}
+.presentation aside img {
+	width: 100%;
+}
 }
 

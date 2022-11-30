@@ -1,0 +1,26 @@
+create table "author" (
+    "id" smallserial not null primary key,
+    "name" text not null
+);
+
+create table "link" (
+    "id" serial not null primary key,
+    "content" text not null,
+    "destination" text not null
+);
+
+create table "blog_entry" (
+    "id" serial not null primary key,
+    "title" text not null,
+    "image_url" text not null,
+    "author" smallint not null references "author" ("id"),
+    "created_on" timestamptz not null default current_timestamp,
+    "description" text not null
+);
+
+create table "element" (
+    "id" bigserial not null primary key,
+);
+
+create table "blog_entry_element" (
+);
