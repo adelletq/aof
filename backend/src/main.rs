@@ -30,19 +30,6 @@ async fn blog_entry(pool: web::Data<PgPool>, path: web::Path<i32>) -> impl Respo
                     .await
                     .expect(&web::Json(r#"{"error": "sql error"}"#));
     web::Json(r.jsonb_build_object)
-//     sql_json!(pool, BlogEntry, "sql/blog_entry.psql", id)
-//     web::Json(aof::BlogEntry{
-//         id,
-//         title: "Title".to_string(),
-//         image_url: "/static/aof1.jpg".to_string(),
-//         author: aof::Author {
-//             id: 1,
-//             name: "Adela Margin".to_string()
-//         },
-//         when: Utc::now(),
-//         description: "O foarte lunga si detaliata descriere a articolului".to_string(),
-//         contents: vec!(),
-//     })
 }
 
 #[actix_web::main]
