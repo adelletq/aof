@@ -32,9 +32,11 @@ div header {
 	display: block;
 	justify-content: center;
 	align-items: center;
-	width: 90%;
 	font-size: 1.5em;
 	margin: 0 auto;
+	width: -moz-available;
+	width: -webkit-fill-available;
+	width: stretch;
 }
 
 header nav {
@@ -106,8 +108,12 @@ h1, h2, h3, h4 {
 	box-shadow: 0 0.2rem 0.4rem #777;
 }
 
-main p {
+div header, main p, main ul {
 	padding: 0 3rem;
+}
+
+main ul {
+	margin-left: 2em;
 }
 
 main form input, main form textarea {
@@ -138,7 +144,7 @@ main form input[type=submit] {
 	border-radius: 0 5rem 0 5rem;
 	overflow: hidden;
 	background-color: #e9dcd6;
-	margin: 0 5rem;
+	margin: 0 3rem;
 	box-shadow: 0 0.3rem 0.3rem 0.1rem #ccc;
 }
 
